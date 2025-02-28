@@ -49,6 +49,3 @@ dist/
 htmlcov/
 .tox/
 docs/_build/
-
-
-kubectl
