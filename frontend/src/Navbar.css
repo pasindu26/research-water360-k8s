@@ -1,0 +1,26 @@
+/* Navbar Styles */
+.navbar-custom {
+    background-color: #1565c0; /* Consistent dark blue */
+    color: white;
+    padding: 10px 15px;
+  }
+  
+  .navbar-custom a {
+    color: white;
+    text-decoration: none;
+  }
+  
+  .navbar-custom a:hover {
+    color: #90caf9; /* Light blue hover effect */
+  }
+  
+  .theme-toggle {
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+  }
+  
+  .theme-toggle:hover {
+    color: #90caf9;
+  }
+  

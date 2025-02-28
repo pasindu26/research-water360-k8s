@@ -1,0 +1,64 @@
+/* AdminPage.css */
+
+/* Table Styling */
+.table-fixed {
+  table-layout: fixed;
+}
+
+.table-fixed th,
+.table-fixed td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Button Spacing */
+.btn-action-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.btn-action-group .btn {
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+/* Pagination Styling */
+.pagination {
+  justify-content: center;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.pagination .page-link {
+  color: #007bff;
+}
+
+.pagination .page-link:hover {
+  background-color: #e9ecef;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-fixed th,
+  .table-fixed td {
+    font-size: 14px;
+  }
+
+  .table-fixed th:last-child,
+  .table-fixed td:last-child {
+    white-space: normal;
+  }
+
+  .btn-action-group {
+    flex-direction: column;
+  }
+
+  .btn-action-group .btn {
+    width: 100%;
+    margin-right: 0;
+  }
+}
