@@ -55,7 +55,7 @@ const About = () => {
               <div className="rounded-circle bg-light mx-auto mb-3" style={{ width: '120px', height: '120px' }}></div>
               <h4>John Doe</h4>
               <p className="text-muted">CEO & Founder</p>
-              <p>Environmental scientist with over 15 years of experience in water quality management.</p>
+              <p>Environmental scientist with over 15 years of experience in water quality management..</p>
             </Card.Body>
           </Card>
         </Col>
