@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 import AppNavbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import { ThemeContext } from './context/ThemeContext';
 
 // Import pages
 import LoginPage from './components/LoginPage';
@@ -25,6 +26,7 @@ function App() {
     const { auth } = useContext(AuthContext);
     const location = useLocation();
     const [authLoading, setAuthLoading] = useState(true);
+    const { theme } = useContext(ThemeContext);
 
     useEffect(() => {
         // Simulating a short delay to ensure auth state is loaded
@@ -47,7 +49,7 @@ function App() {
     }
 
     return (
-        <div className="app-container">
+        <div className={`app ${theme}`}>
             {/* Navbar */}
             <AppNavbar />
 

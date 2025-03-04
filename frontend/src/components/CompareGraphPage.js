@@ -202,13 +202,19 @@ function CompareGraphPage() {
     },
   }), [theme, dataType]);
 
+  // Add custom styles for dark mode
+  const getInputStyles = () => ({
+    backgroundColor: theme === 'dark' ? '#2b3035' : '#fff',
+    color: theme === 'dark' ? '#fff' : '#000',
+    borderColor: theme === 'dark' ? '#495057' : '#ced4da',
+  });
+
   return (
     <Container fluid className={`py-4 ${theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
       <h2 className="text-center mb-4">Compare Values Across Locations</h2>
       {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
 
       <Form>
-        {/* Start Date, End Date, Location Input, and Data Type */}
         <Row className="mb-3">
           <Col md={3}>
             <Form.Group>
@@ -219,6 +225,9 @@ function CompareGraphPage() {
                 dateFormat="yyyy-MM-dd"
                 className="form-control"
                 placeholderText="Select start date"
+                style={getInputStyles()}
+                calendarClassName={theme === 'dark' ? 'dark-calendar' : ''}
+                wrapperClassName={theme === 'dark' ? 'dark-calendar-wrapper' : ''}
               />
             </Form.Group>
           </Col>
@@ -231,6 +240,9 @@ function CompareGraphPage() {
                 dateFormat="yyyy-MM-dd"
                 className="form-control"
                 placeholderText="Select end date"
+                style={getInputStyles()}
+                calendarClassName={theme === 'dark' ? 'dark-calendar' : ''}
+                wrapperClassName={theme === 'dark' ? 'dark-calendar-wrapper' : ''}
               />
             </Form.Group>
           </Col>
@@ -242,13 +254,19 @@ function CompareGraphPage() {
                 placeholder="Enter location"
                 value={locationInput}
                 onChange={(e) => setLocationInput(e.target.value)}
+                style={getInputStyles()}
               />
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
               <Form.Label>Data Type</Form.Label>
-              <Form.Control as="select" value={dataType} onChange={(e) => setDataType(e.target.value)}>
+              <Form.Control 
+                as="select" 
+                value={dataType} 
+                onChange={(e) => setDataType(e.target.value)}
+                style={getInputStyles()}
+              >
                 <option value="ph_value">pH Value</option>
                 <option value="temperature">Temperature</option>
                 <option value="turbidity">Turbidity</option>
@@ -328,5 +346,57 @@ const getColor = (index, opacity = 1) => {
   ];
   return colors[index % colors.length];
 };
+
+// Add these styles to your CSS file (e.g., src/styles/main.css)
+const styles = `
+.dark-calendar {
+  background-color: #2b3035 !important;
+  color: #fff !important;
+  border-color: #495057 !important;
+}
+
+.dark-calendar .react-datepicker__header {
+  background-color: #343a40 !important;
+  color: #fff !important;
+  border-bottom-color: #495057 !important;
+}
+
+.dark-calendar .react-datepicker__current-month,
+.dark-calendar .react-datepicker__day-name,
+.dark-calendar .react-datepicker__day {
+  color: #fff !important;
+}
+
+.dark-calendar .react-datepicker__day:hover {
+  background-color: #495057 !important;
+}
+
+.dark-calendar .react-datepicker__day--selected {
+  background-color: #0d6efd !important;
+}
+
+.dark-calendar .react-datepicker__day--keyboard-selected {
+  background-color: #0d6efd !important;
+}
+
+.dark-calendar .react-datepicker__input-container input {
+  background-color: #2b3035 !important;
+  color: #fff !important;
+  border-color: #495057 !important;
+}
+
+.dark-calendar-wrapper .react-datepicker__triangle {
+  border-bottom-color: #343a40 !important;
+}
+
+.dark-calendar-wrapper .react-datepicker__triangle::before {
+  border-bottom-color: #495057 !important;
+}
+`;
+
+// Add the styles to the document
+const styleSheet = document.createElement('style');
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default CompareGraphPage;

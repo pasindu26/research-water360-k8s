@@ -62,7 +62,7 @@ const AppNavbar = () => {
               onClick={toggleTheme}
               className="me-2"
             >
-              {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+              {theme === 'dark' ? '🌞 Light' : '🌙 Dark'}
             </Button>
             
             {isAuthenticated ? (
