@@ -10,9 +10,9 @@ import {
   Modal,
   Pagination,
 } from 'react-bootstrap';
+import axios from 'axios';
 import moment from 'moment';
 import { ThemeContext } from '../context/ThemeContext';
-import apiService from '../utils/api';
 import '../AdminPage.css';
 
 function AdminPage() {
@@ -35,6 +35,7 @@ function AdminPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const BACKEND_URL = window._env_?.REACT_APP_BACKEND_URL;
 
   const { theme } = useContext(ThemeContext);
 
@@ -42,16 +43,18 @@ function AdminPage() {
     setIsLoading(true);
     setError('');
     try {
-      const data = await apiService.admin.getAllData();
-      setAllData(data || []);
-      setDisplayedData(data || []);
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get(`${BACKEND_URL}/all-data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllData(response.data);
     } catch (err) {
       console.error('Error fetching all data:', err);
-      setError(err.message || 'Failed to fetch data. Please try again later.');
+      setError('Failed to fetch data. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [BACKEND_URL]);
 
   const applyFilters = useCallback(() => {
     let data = allData;
@@ -79,13 +82,16 @@ function AdminPage() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
       try {
-        await apiService.data.deleteData(id);
+        const token = localStorage.getItem('authToken');
+        await axios.delete(`${BACKEND_URL}/delete-data/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setSuccessMessage('Record deleted successfully!');
         fetchAllData();
         setTimeout(() => setSuccessMessage(''), 3000);
       } catch (err) {
         console.error('Error deleting record:', err);
-        setError(err.message || 'Failed to delete the record. Please try again later.');
+        alert('Failed to delete the record. Please try again later.');
       }
     }
   };
@@ -93,7 +99,10 @@ function AdminPage() {
   const handleCreate = async () => {
     setIsSubmitting(true);
     try {
-      await apiService.data.createData(newRecord);
+      const token = localStorage.getItem('authToken');
+      await axios.post(`${BACKEND_URL}/create-data`, newRecord, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setShowCreateModal(false);
       setNewRecord({ location: '', ph_value: '', temperature: '', turbidity: '' });
       setSuccessMessage('Record added successfully!');
@@ -101,7 +110,7 @@ function AdminPage() {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Error creating new record:', err);
-      setError(err.message || 'Failed to create new record. Please try again later.');
+      alert('Failed to create new record. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +125,10 @@ function AdminPage() {
     if (!editRecord) return;
     setIsSubmitting(true);
     try {
-      await apiService.data.updateData(editRecord.id, editRecord);
+      const token = localStorage.getItem('authToken');
+      await axios.put(`${BACKEND_URL}/update-data/${editRecord.id}`, editRecord, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setShowEditModal(false);
       setEditRecord(null);
       setSuccessMessage('Record updated successfully!');
@@ -124,7 +136,7 @@ function AdminPage() {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Error updating record:', err);
-      setError(err.message || 'Failed to update the record. Please try again later.');
+      alert('Failed to update the record. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }

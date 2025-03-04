@@ -16,8 +16,17 @@ def create_app():
     config = get_config()
     app.config.from_object(config)
 
-    # Enable CORS
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": app.config['CORS_ORIGIN']}})
+    # Enable CORS with proper configuration
+    CORS(app, 
+         resources={r"/*": {
+             "origins": app.config['CORS_ORIGIN'],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+             "supports_credentials": True,
+             "max_age": 86400  # 24 hours
+         }},
+         supports_credentials=True
+    )
 
     # Initialize MySQL
     mysql.init_app(app)

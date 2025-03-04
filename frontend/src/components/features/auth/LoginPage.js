@@ -1,49 +1,41 @@
-// src/components/LoginPage.js
-import React, { useState, useEffect } from 'react';
+// src/components/features/auth/LoginPage.js
+import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
-import { Link, useLocation } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import '../styles/main.css';
+import { Link } from 'react-router-dom';
+import useAuth from '../../../hooks/useAuth';
+import { isValidEmail } from '../../../utils/validation';
+import '../../../styles/main.css';
 
 function LoginPage() {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [sessionMessage, setSessionMessage] = useState('');
     
     const { login } = useAuth();
-    const location = useLocation();
-
-    useEffect(() => {
-        // Check for session expiry message
-        if (location.state?.message) {
-            setSessionMessage(location.state.message);
-            // Clear the message from location state
-            window.history.replaceState({}, document.title);
-        }
-    }, [location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Clear any previous messages
-        setError('');
-        setSessionMessage('');
-        
         // Validate form
-        if (!username || !password) {
-            setError('Please enter both username and password');
+        if (!email || !password) {
+            setError('Please enter both email and password');
             return;
         }
         
+        if (!isValidEmail(email)) {
+            setError('Please enter a valid email address');
+            return;
+        }
+        
+        setError('');
         setLoading(true);
         
         try {
-            const result = await login({ username, password });
+            const result = await login({ email, password });
             
             if (!result.success) {
-                setError(result.message || 'Invalid credentials');
+                setError(result.message);
             }
         } catch (err) {
             setError('An error occurred during login. Please try again.');
@@ -61,26 +53,16 @@ function LoginPage() {
                         <Card.Body>
                             <h2 className="text-center mb-4">Login</h2>
                             
-                            {sessionMessage && (
-                                <Alert variant="warning" onClose={() => setSessionMessage('')} dismissible>
-                                    {sessionMessage}
-                                </Alert>
-                            )}
-                            
-                            {error && (
-                                <Alert variant="danger" onClose={() => setError('')} dismissible>
-                                    {error}
-                                </Alert>
-                            )}
+                            {error && <Alert variant="danger">{error}</Alert>}
                             
                             <Form onSubmit={handleSubmit}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Username</Form.Label>
+                                    <Form.Label>Email</Form.Label>
                                     <Form.Control
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        placeholder="Enter your username"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
                                         required
                                     />
                                 </Form.Group>

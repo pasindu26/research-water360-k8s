@@ -49,6 +49,32 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
+# Add preflight request handler for all routes
+@api.route('/<path:path>', methods=['OPTIONS'])
+def handle_preflight(path):
+    return '', 204
+
+# Add auth verification endpoint
+@api.route('/check', methods=['GET', 'OPTIONS'])
+def check_auth():
+    # Handle preflight request
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    @token_required
+    def verify_token(current_user):
+        user = {
+            'id': current_user.id,
+            'firstname': current_user.firstname,
+            'lastname': current_user.lastname,
+            'username': current_user.username,
+            'email': current_user.email,
+            'user_type': current_user.user_type
+        }
+        return jsonify({'message': 'Token is valid', 'user': user}), 200
+    
+    return verify_token()
+
 #from signup.js
 @api.route('/signup', methods=['POST'])
 def signup():
@@ -532,66 +558,53 @@ def create_data(current_user):
 
 
 @api.route('/delete-data/<int:id>', methods=['OPTIONS', 'DELETE'])
-def delete_data(id):
-    if request.method == 'OPTIONS':
-        response = jsonify({'message': 'Preflight OK'})
-        response.headers.add("Access-Control-Allow-Origin", app.config['CORS_ORIGIN'])
-        response.headers.add("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Authorization, Content-Type")
-        return response, 200
+@token_required
+def delete_data(current_user, id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("DELETE FROM sensor_data WHERE id = %s", (id,))
+        mysql.connection.commit()
+        affected_rows = cur.rowcount
+        cur.close()
 
-    @token_required  # Apply authentication only to DELETE
-    def delete_record(current_user):
-        try:
-            cur = mysql.connection.cursor()
-            cur.execute("DELETE FROM sensor_data WHERE id = %s", (id,))
-            mysql.connection.commit()
-            cur.close()
-            return jsonify({'message': 'Record deleted successfully'}), 200
-        except Exception as e:
-            app.logger.error(f"Error deleting record with id {id}: {e}", exc_info=True)
-            return jsonify({'error': 'Internal Server Error'}), 500
+        if affected_rows == 0:
+            return jsonify({'message': 'No record found with that ID'}), 404
 
-    return delete_record()
+        return jsonify({'message': 'Record deleted successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting data: {e}", exc_info=True)
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @api.route('/update-data/<int:id>', methods=['OPTIONS', 'PUT'])
-def update_data(id):
-    # Handle preflight request
-    if request.method == 'OPTIONS':
-        response = jsonify({'message': 'Preflight OK'})
-        response.headers.add("Access-Control-Allow-Origin", app.config['CORS_ORIGIN'])
-        response.headers.add("Access-Control-Allow-Methods", "PUT, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Authorization, Content-Type")
-        return response, 200
+@token_required
+def update_data(current_user, id):
+    try:
+        data = request.get_json()
+        location = data.get('location')
+        ph_value = data.get('ph_value')
+        temperature = data.get('temperature')
+        turbidity = data.get('turbidity')
 
-    @token_required
-    def update_record(current_user):
-        try:
-            data = request.get_json()
+        if not all([location, ph_value, temperature, turbidity]):
+            return jsonify({'error': 'All fields are required'}), 400
 
-            # Validate incoming data
-            required_fields = ['location', 'ph_value', 'temperature', 'turbidity']
-            for field in required_fields:
-                if field not in data:
-                    return jsonify({'error': f"'{field}' is required"}), 400
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            UPDATE sensor_data
+            SET location = %s, ph_value = %s, temperature = %s, turbidity = %s
+            WHERE id = %s
+        """, (location, ph_value, temperature, turbidity, id))
+        mysql.connection.commit()
+        affected_rows = cur.rowcount
+        cur.close()
 
-            # Update the record in the database
-            cur = mysql.connection.cursor()
-            query = """
-                UPDATE sensor_data
-                SET location = %s, ph_value = %s, temperature = %s, turbidity = %s
-                WHERE id = %s
-            """
-            cur.execute(query, (data['location'], data['ph_value'], data['temperature'], data['turbidity'], id))
-            mysql.connection.commit()
-            cur.close()
+        if affected_rows == 0:
+            return jsonify({'message': 'No record found with that ID or no changes made'}), 404
 
-            return jsonify({'message': 'Record updated successfully'}), 200
-        except Exception as e:
-            app.logger.error(f"Error updating record with id {id}: {e}", exc_info=True)
-            return jsonify({'error': 'Internal Server Error'}), 500
-
-    return update_record()
+        return jsonify({'message': 'Record updated successfully'}), 200
+    except Exception as e:
+        app.logger.error(f"Error updating data: {e}", exc_info=True)
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 
 

@@ -1,70 +1,152 @@
-# Getting Started with Create React App
+# Water360 Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend application for the Water360 project, a comprehensive water quality monitoring and analysis solution.
 
-## Available Scripts
+## Project Structure
 
-In the project directory, you can run:
+The project follows a modular architecture with the following structure:
 
-### `npm start`
+```
+frontend/
+├── public/              # Static files
+├── src/                 # Source code
+│   ├── components/      # React components
+│   │   ├── common/      # Reusable UI components
+│   │   ├── features/    # Feature-specific components
+│   │   ├── layout/      # Layout components
+│   │   └── pages/       # Page components
+│   ├── context/         # React context providers
+│   ├── hooks/           # Custom React hooks
+│   ├── styles/          # CSS styles
+│   ├── utils/           # Utility functions
+│   ├── App.js           # Main application component
+│   ├── config.js        # Application configuration
+│   └── index.js         # Application entry point
+├── .env                 # Environment variables
+├── Dockerfile           # Docker configuration
+└── package.json         # Dependencies and scripts
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Features
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Authentication**: User login, signup, and session management
+- **Dashboard**: Overview of water quality metrics
+- **Data Visualization**: Interactive graphs and charts
+- **Data Tables**: Tabular data display with sorting and filtering
+- **Admin Panel**: User management and system configuration
+- **Dark Mode**: Toggle between light and dark themes
+- **Responsive Design**: Works on desktop and mobile devices
 
-### `npm test`
+## Technology Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **React**: UI library
+- **React Router**: Navigation and routing
+- **React Bootstrap**: UI components
+- **Axios**: HTTP client
+- **Chart.js**: Data visualization
+- **Bootstrap Icons**: Icon library
+- **Framer Motion**: Animations
 
-### `npm run build`
+## Environment Variables
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The application uses the following environment variables:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- `REACT_APP_BACKEND_URL`: URL of the backend API server
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+These variables are injected at runtime through Kubernetes ConfigMaps.
 
-### `npm run eject`
+## Development
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Node.js (v16 or higher)
+- npm (v7 or higher)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Installation
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. Clone the repository
+2. Install dependencies:
 
-## Learn More
+```bash
+cd frontend
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. Create a `.env` file with the required environment variables:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+REACT_APP_BACKEND_URL=http://localhost:5000
+```
 
-### Code Splitting
+4. Start the development server:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+npm start
+```
 
-### Analyzing the Bundle Size
+### Building for Production
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm run build
+```
 
-### Making a Progressive Web App
+This will create a production-ready build in the `build` directory.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Docker
 
-### Advanced Configuration
+The application can be built and run as a Docker container:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+# Build the Docker image
+docker build -t water360-frontend .
 
-### Deployment
+# Run the container
+docker run -p 80:80 -e REACT_APP_BACKEND_URL=http://backend-api-url water360-frontend
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Kubernetes Deployment
 
-### `npm run build` fails to minify
+The application is deployed to Kubernetes using the configuration files in the `K8s/Frontend` directory:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `frontend-configmap.yaml`: Environment variables
+- `frontend-water360.yaml`: Deployment configuration
+- `frontend-service.yaml`: Service configuration
+
+## Code Quality
+
+The project includes tools for maintaining code quality:
+
+- **ESLint**: JavaScript linting
+- **Prettier**: Code formatting
+
+Run the following commands to check and fix code quality issues:
+
+```bash
+# Lint the code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Format the code
+npm run format
+```
+
+## Project Structure Best Practices
+
+1. **Components**: Keep components small and focused on a single responsibility
+2. **Custom Hooks**: Extract complex logic into custom hooks
+3. **Context**: Use context for global state management
+4. **Utils**: Keep utility functions pure and well-tested
+5. **Config**: Centralize configuration in the config.js file
+
+## Contributing
+
+1. Follow the established project structure
+2. Write clean, maintainable code
+3. Document your changes
+4. Test thoroughly before submitting changes
+
+## License
+
+This project is proprietary and confidential.

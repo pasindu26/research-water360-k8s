@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: jonemark226/backend-water360:01
+        image: jonemark226/backend-water360:02
         ports:
         - containerPort: 5000
         envFrom:
