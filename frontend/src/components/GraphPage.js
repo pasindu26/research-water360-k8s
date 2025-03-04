@@ -11,11 +11,11 @@ import {
   Tooltip,
   Filler,
 } from 'chart.js';
-import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ThemeContext } from '../context/ThemeContext';
+import apiService from '../utils/api';
 
 // Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Legend, Tooltip, Filler);
@@ -28,7 +28,6 @@ function GraphPage() {
   const [chartData, setChartData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const BACKEND_URL = window._env_?.REACT_APP_BACKEND_URL;
 
   const { theme } = useContext(ThemeContext);
 
@@ -42,7 +41,6 @@ function GraphPage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('authToken');
       const params = {
         startDate: moment(startDate).format('YYYY-MM-DD'),
         endDate: moment(endDate).format('YYYY-MM-DD'),
@@ -50,10 +48,7 @@ function GraphPage() {
         dataType,
       };
 
-      const response = await axios.get(`${BACKEND_URL}/graph-data`, {
-        params,
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiService.graphs.getGraphData(params);
 
       const labels = response.data.map((entry) => entry.date);
       const data = response.data.map((entry) => entry.value);

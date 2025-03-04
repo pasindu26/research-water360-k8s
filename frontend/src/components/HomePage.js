@@ -18,11 +18,12 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import axios from 'axios';
-import moment from 'moment';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ThemeContext } from '../context/ThemeContext';
+import apiService from '../utils/api';
+import useAuth from '../hooks/useAuth';
+import moment from 'moment';
 
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
@@ -39,56 +40,39 @@ function HomePage() {
   const [refreshInterval, setRefreshInterval] = useState(0);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
   const navigate = useNavigate();
-
   const { theme } = useContext(ThemeContext);
-  const BACKEND_URL = window._env_?.REACT_APP_BACKEND_URL;
+  const { isAuthenticated } = useAuth();
 
   const checkAuth = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        navigate('/login');
-      }
-    } catch (error) {
-      console.error('Error checking session:', error);
+    if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const fetchSummaryInsights = useCallback(async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${BACKEND_URL}/summary-insights`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiService.data.getSummaryInsights();
       setSummary(response.data);
     } catch (error) {
       console.error('Error fetching summary insights:', error);
-      setSummary(null); // Set to null if error occurs
+      setSummary(null);
     }
-  }, [BACKEND_URL]);
+  }, []);
 
   const fetchWarnings = useCallback(async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${BACKEND_URL}/warnings`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiService.data.getWarnings();
       setWarnings(response.data);
     } catch (error) {
       console.error('Error fetching warnings:', error);
-      setWarnings([]); // Set to empty array if error occurs
+      setWarnings([]);
     }
-  }, [BACKEND_URL]);
+  }, []);
 
   const fetchCorrelationData = useCallback(async () => {
     setIsLoadingCorrelation(true);
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${BACKEND_URL}/correlation-data`, {
-        params: { location },
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiService.data.getCorrelationData(location);
       setCorrelationData({
         temperature: response.data.temperature,
         turbidity: response.data.turbidity,
@@ -96,24 +80,21 @@ function HomePage() {
       });
     } catch (error) {
       console.error('Error fetching correlation data:', error);
-      setCorrelationData(null); // Set to null if error occurs
+      setCorrelationData(null);
     } finally {
       setIsLoadingCorrelation(false);
     }
-  }, [BACKEND_URL, location]);
+  }, [location]);
 
   const fetchRecentData = useCallback(async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${BACKEND_URL}/recent-data`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiService.data.getRecentData();
       setRecentData(response.data);
     } catch (error) {
       console.error('Error fetching recent data:', error);
-      setRecentData([]); // Set to empty array if error occurs
+      setRecentData([]);
     }
-  }, [BACKEND_URL]);
+  }, []);
 
   const fetchAllData = useCallback(async () => {
     setIsLoadingPage(true);

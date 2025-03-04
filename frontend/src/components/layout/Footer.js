@@ -49,10 +49,10 @@ const Footer = () => {
           <Col md={3} className="mb-3 mb-md-0">
             <h6>Resources</h6>
             <ul className="list-unstyled">
-              <li><a href="#" className="text-decoration-none">Documentation</a></li>
-              <li><a href="#" className="text-decoration-none">API Reference</a></li>
-              <li><a href="#" className="text-decoration-none">Blog</a></li>
-              <li><a href="#" className="text-decoration-none">Support</a></li>
+              <li><Link to="/docs" className="text-decoration-none">Documentation</Link></li>
+              <li><Link to="/api" className="text-decoration-none">API Reference</Link></li>
+              <li><Link to="/blog" className="text-decoration-none">Blog</Link></li>
+              <li><Link to="/support" className="text-decoration-none">Support</Link></li>
             </ul>
           </Col>
           

@@ -42,30 +42,33 @@ function AdminPage() {
     setIsLoading(true);
     setError('');
     try {
-      const data = await apiService.admin.getAllData();
-      setAllData(data || []);
-      setDisplayedData(data || []);
+      const response = await apiService.admin.getAllData();
+      const data = Array.isArray(response.data) ? response.data : [];
+      setAllData(data);
+      setDisplayedData(data);
     } catch (err) {
       console.error('Error fetching all data:', err);
       setError(err.message || 'Failed to fetch data. Please try again later.');
+      setAllData([]);
+      setDisplayedData([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const applyFilters = useCallback(() => {
-    let data = allData;
+    let filteredData = [...allData];
     if (filterDate) {
       const formattedDate = moment(filterDate).format('YYYY-MM-DD');
-      data = data.filter((row) => row.date === formattedDate);
+      filteredData = filteredData.filter((row) => row.date === formattedDate);
     }
     if (filterLocation) {
-      data = data.filter((row) =>
+      filteredData = filteredData.filter((row) =>
         row.location.toLowerCase().includes(filterLocation.toLowerCase())
       );
     }
     setCurrentPage(1);
-    setDisplayedData(data);
+    setDisplayedData(filteredData);
   }, [allData, filterDate, filterLocation]);
 
   useEffect(() => {

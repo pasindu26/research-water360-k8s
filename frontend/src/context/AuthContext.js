@@ -108,85 +108,18 @@ export const AuthProvider = ({ children }) => {
     let sessionCheckInterval;
 
     const checkSession = async () => {
+      if (!mounted) return;
+      
       try {
-        // Get session data from localStorage
-        const sessionDataStr = localStorage.getItem('sessionData');
-        
-        // If no session data exists, we're done
-        if (!sessionDataStr) {
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // Try to parse the session data
-        let sessionData;
-        try {
-          sessionData = JSON.parse(sessionDataStr);
-        } catch (error) {
-          console.error('Error parsing session data:', error);
-          clearSession();
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // Check if session is expired
-        if (isSessionExpired(sessionData.expiryTime)) {
-          clearSession('Your session has expired. Please login again.');
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // Check for inactivity timeout (30 minutes)
-        const inactivityTimeout = 30 * 60 * 1000; // 30 minutes
-        if (new Date().getTime() - sessionData.lastActivity > inactivityTimeout) {
-          clearSession('Session expired due to inactivity. Please login again.');
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // Always set auth state from stored session data first
-        if (mounted) {
-          setAuth({
-            loggedIn: true,
-            user: sessionData.user,
-            token: sessionData.token,
-            sessionExpiry: sessionData.expiryTime
-          });
-          
-          // We can consider the loading done at this point
-          setLoading(false);
-        }
-
-        // Now try to verify the token with the backend, but don't block on it
-        try {
-          const response = await apiService.auth.checkAuth();
-          
-          if (mounted && response.data && response.data.user) {
-            setAuth(prev => ({
-              ...prev,
-              user: response.data.user // Update with latest user data
-            }));
-          }
-        } catch (error) {
-          console.warn('Auth check failed:', error);
-          // Don't clear session on backend errors - rely on the client-side expiry
-          // This prevents CORS issues from logging users out
-          
-          // Only clear session if we get a specific 401 from the server
-          if (error.response && error.response.status === 401) {
-            clearSession('Session invalid. Please login again.');
-          }
+        const response = await apiService.auth.checkAuth();
+        if (!response.data.valid) {
+          clearSession('Session expired. Please login again.');
         }
       } catch (error) {
-        console.error('Session check error:', error);
-        // Don't clear session for general errors
-        if (mounted) {
-          setLoading(false);
-        }
+        console.error('Session check failed:', error);
+        clearSession('Session verification failed. Please login again.');
       }
     };
-
-    checkSession();
     
     // Set up periodic session checks - every 5 minutes is sufficient
     sessionCheckInterval = setInterval(checkSession, 5 * 60 * 1000);
@@ -195,7 +128,7 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       clearInterval(sessionCheckInterval);
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, clearSession]);
 
   // Set up activity listener
   useEffect(() => {

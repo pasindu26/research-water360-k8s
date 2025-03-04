@@ -1,8 +1,8 @@
 import requests
 
 # API endpoints
-LOGIN_URL = "http://52.91.221.166:5000/login"
-CREATE_DATA_URL = "http://52.91.221.166:5000/create-data"
+LOGIN_URL = "http://54.88.148.135:5000/login"
+CREATE_DATA_URL = "http://54.88.148.135:5000/create-data"
 
 # User credentials
 username = "admin1"
@@ -34,8 +34,8 @@ def add_single_record(token):
     # Prepare the data payload
     data = {
         "location": "US",
-        "ph_value": 7.5,
-        "temperature": 25.0,
+        "ph_value": 4.5,
+        "temperature": 2.0,
         "turbidity": 8.0
     }
     headers = {

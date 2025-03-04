@@ -3,8 +3,8 @@ import random
 import time
 
 # API endpoints
-LOGIN_URL = "http://52.91.221.166:5000/login"
-CREATE_DATA_URL = "http://52.91.221.166:5000/create-data"
+LOGIN_URL = "http://54.88.148.135:5000/login"
+CREATE_DATA_URL = "http://54.88.148.135:5000/create-data"
 
 # User credentials
 username = "admin1"

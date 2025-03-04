@@ -11,11 +11,11 @@ import {
   Tooltip,
   Filler,
 } from 'chart.js';
-import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
+import apiService from '../utils/api';
 
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -31,7 +31,6 @@ function CompareGraphPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [locationInput, setLocationInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const BACKEND_URL = window._env_?.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
 
@@ -46,6 +45,63 @@ function CompareGraphPage() {
     setLocations(locations.filter((loc) => loc !== location));
   };
 
+  // Add data processing functions
+  const processGraphData = (responseData) => {
+    if (!responseData) {
+      throw new Error('No data received from server');
+    }
+
+    // Handle different response formats
+    if (Array.isArray(responseData)) {
+      return responseData;
+    }
+    
+    if (responseData.data && Array.isArray(responseData.data)) {
+      return responseData.data;
+    }
+    
+    if (typeof responseData === "object") {
+      return Object.entries(responseData).map(([location, data]) => ({
+        location,
+        data: Array.isArray(data) ? data : 
+              Array.isArray(data.data) ? data.data :
+              Object.entries(data).map(([date, value]) => ({
+                date,
+                value: parseFloat(value)
+              }))
+      }));
+    }
+    
+    throw new Error('Unsupported data format received from server');
+  };
+
+  const createDatasets = (graphData, sortedDates) => {
+    return graphData.map((locationData, index) => {
+      if (!Array.isArray(locationData.data)) {
+        console.warn(`Invalid data format for location ${locationData.location}`);
+        return null;
+      }
+
+      // Create a map of date to value for easy lookup
+      const dateValueMap = locationData.data.reduce((acc, entry) => {
+        if (entry?.date && entry?.value !== undefined) {
+          acc[entry.date] = parseFloat(entry.value);
+        }
+        return acc;
+      }, {});
+
+      return {
+        label: locationData.location,
+        data: sortedDates.map(date => dateValueMap[date] ?? null),
+        borderColor: getColor(index),
+        backgroundColor: getColor(index, 0.2),
+        tension: 0.3,
+        fill: false,
+        pointRadius: 4,
+      };
+    }).filter(Boolean); // Remove null datasets
+  };
+
   const fetchGraphData = async () => {
     if (!startDate || !endDate || locations.length === 0) {
       setErrorMessage('Please provide start date, end date, and at least one location.');
@@ -56,13 +112,6 @@ function CompareGraphPage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setErrorMessage('Unauthorized access. Please log in.');
-        navigate('/login');
-        return;
-      }
-
       const params = {
         startDate: moment(startDate).format('YYYY-MM-DD'),
         endDate: moment(endDate).format('YYYY-MM-DD'),
@@ -70,31 +119,43 @@ function CompareGraphPage() {
         dataType,
       };
 
-      const response = await axios.get(`${BACKEND_URL}/compare-graph-data`, {
-        params,
-        headers: { Authorization: `Bearer ${token}` },
+      console.log('Fetching data with params:', params);
+      const response = await apiService.graphs.getCompareGraphData(params);
+      console.log('Raw response:', response);
+
+      const graphData = processGraphData(response.data);
+
+      // Extract all unique dates
+      const allDates = new Set();
+      graphData.forEach(locationData => {
+        if (Array.isArray(locationData.data)) {
+          locationData.data.forEach(entry => {
+            if (entry?.date) allDates.add(entry.date);
+          });
+        }
       });
 
-      const datasets = Object.keys(response.data).map((location, index) => ({
-        label: `${getDataTypeLabel(dataType)} for Location: ${location}`,
-        data: response.data[location].map((entry) => entry.value),
-        borderColor: getColor(index),
-        backgroundColor: getColor(index, 0.2),
-        tension: 0.4,
-        fill: false,
-        pointRadius: 3,
-        pointHoverRadius: 6,
-      }));
+      if (allDates.size === 0) {
+        throw new Error('No valid dates found in the data');
+      }
 
-      const labels = response.data[Object.keys(response.data)[0]].map((entry) => entry.date);
+      // Sort dates chronologically
+      const sortedDates = Array.from(allDates).sort();
+
+      // Create datasets for each location
+      const datasets = createDatasets(graphData, sortedDates);
+
+      if (datasets.length === 0) {
+        throw new Error('No valid data available for the selected parameters');
+      }
 
       setChartData({
-        labels,
+        labels: sortedDates,
         datasets,
       });
     } catch (error) {
-      console.error('Error fetching graph data:', error);
-      setErrorMessage('Failed to fetch graph data. Please try again later.');
+      console.error('Error in fetchGraphData:', error);
+      setErrorMessage(error.message || 'Failed to fetch comparison data. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -113,17 +174,33 @@ function CompareGraphPage() {
     }
   };
 
-  const getColor = (index, opacity = 1) => {
-    const colors = [
-      `rgba(75, 192, 192, ${opacity})`,
-      `rgba(255, 99, 132, ${opacity})`,
-      `rgba(54, 162, 235, ${opacity})`,
-      `rgba(255, 206, 86, ${opacity})`,
-      `rgba(153, 102, 255, ${opacity})`,
-      `rgba(255, 159, 64, ${opacity})`,
-    ];
-    return colors[index % colors.length];
-  };
+  // Memoize chart options
+  const chartOptions = React.useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: { color: theme === 'dark' ? '#FFF' : '#000' },
+      },
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Date', color: theme === 'dark' ? '#FFF' : '#000' },
+        ticks: { color: theme === 'dark' ? '#FFF' : '#000' },
+      },
+      y: {
+        title: {
+          display: true,
+          text: getYAxisLabel(dataType),
+          color: theme === 'dark' ? '#FFF' : '#000',
+        },
+        ticks: { color: theme === 'dark' ? '#FFF' : '#000' },
+      },
+    },
+  }), [theme, dataType]);
 
   return (
     <Container fluid className={`py-4 ${theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
@@ -131,7 +208,7 @@ function CompareGraphPage() {
       {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
 
       <Form>
-        {/* Start Date, End Date, Location Input, and Data Type - Same Level */}
+        {/* Start Date, End Date, Location Input, and Data Type */}
         <Row className="mb-3">
           <Col md={3}>
             <Form.Group>
@@ -222,32 +299,7 @@ function CompareGraphPage() {
         <div className="mt-4" style={{ height: '70vh', width: '100%', margin: '0 auto' }}>
           <Line
             data={chartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top',
-                  labels: { color: theme === 'dark' ? '#FFF' : '#000' },
-                },
-                tooltip: { mode: 'index', intersect: false },
-              },
-              scales: {
-                x: {
-                  title: { display: true, text: 'Date', color: theme === 'dark' ? '#FFF' : '#000' },
-                  ticks: { color: theme === 'dark' ? '#FFF' : '#000' },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: getYAxisLabel(dataType),
-                    color: theme === 'dark' ? '#FFF' : '#000',
-                  },
-                  ticks: { color: theme === 'dark' ? '#FFF' : '#000' },
-                },
-              },
-            }}
+            options={chartOptions}
           />
         </div>
       )}
@@ -255,17 +307,26 @@ function CompareGraphPage() {
   );
 }
 
+// Move helper functions outside component
 const getYAxisLabel = (dataType) => {
-  switch (dataType) {
-    case 'ph_value':
-      return 'pH Value';
-    case 'temperature':
-      return 'Temperature (°C)';
-    case 'turbidity':
-      return 'Turbidity (NTU)';
-    default:
-      return '';
-  }
+  const labels = {
+    ph_value: 'pH Value',
+    temperature: 'Temperature (°C)',
+    turbidity: 'Turbidity (NTU)',
+  };
+  return labels[dataType] || '';
+};
+
+const getColor = (index, opacity = 1) => {
+  const colors = [
+    `rgba(75, 192, 192, ${opacity})`,
+    `rgba(255, 99, 132, ${opacity})`,
+    `rgba(54, 162, 235, ${opacity})`,
+    `rgba(255, 206, 86, ${opacity})`,
+    `rgba(153, 102, 255, ${opacity})`,
+    `rgba(255, 159, 64, ${opacity})`,
+  ];
+  return colors[index % colors.length];
 };
 
 export default CompareGraphPage;

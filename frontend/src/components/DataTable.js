@@ -1,11 +1,11 @@
 // src/components/DataTable.js
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { Table, Form, Button, Row, Col, InputGroup, Alert } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
-import { ThemeContext } from '../context/ThemeContext'; // Import ThemeContext
+import { ThemeContext } from '../context/ThemeContext';
+import apiService from '../utils/api';
 
 function DataTable() {
   const [data, setData] = useState([]);
@@ -14,20 +14,15 @@ function DataTable() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isPolling, setIsPolling] = useState(false);
-  const BACKEND_URL = window._env_?.REACT_APP_BACKEND_URL;
 
-  const { theme } = useContext(ThemeContext); // Get the current theme
+  const { theme } = useContext(ThemeContext);
 
   // Fetch data from the backend
   const fetchData = async (params = {}) => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${BACKEND_URL}/data`, {
-        params: params,
-        headers: { Authorization: `Bearer ${token}` }, // Attach token to the request
-      });
+      const response = await apiService.data.getData(params);
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
